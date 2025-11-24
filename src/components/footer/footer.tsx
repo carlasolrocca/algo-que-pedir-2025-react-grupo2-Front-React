@@ -9,7 +9,7 @@ import estrellaPuntuacion  from '/estrellaPuntuacion.svg'
 //Hay que agregar las rutas aca y en el routes.tsx
 const linksFooter = [
     { link: '/home', label:'Inicio', icon: home },
-    { link: '/checkout-pedido/', label: 'Pedidos', icon: ticketRecibo },
+    { link: '/detalle-pedido/', label: 'Pedidos', icon: ticketRecibo },
     { link: '/calificar-local  ', label: 'Calificar', icon: estrellaPuntuacion },
     { link: '/perfil-usuario', label: 'Perfil', icon: perfil }
 ]
