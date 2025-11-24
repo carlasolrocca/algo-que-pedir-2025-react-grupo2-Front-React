@@ -13,6 +13,7 @@ export class Usuario {
     public password: string = '',
     public email: string = '',
     public direccion: string = '',
+    public calle: string = '',
     public altura: number = 0,
     public latitud: number = 0,
     public longitud: number = 0,
@@ -41,6 +42,7 @@ export class Usuario {
   static fromJSON(usuarioJSON: UsuarioJSON): Usuario {
       const usuario = Object.assign(new Usuario(), usuarioJSON, {
         direccion: usuarioJSON.direccion.direccion,
+        calle: usuarioJSON.direccion.calle,
         altura: usuarioJSON.direccion.altura,
         latitud: usuarioJSON.direccion.latitud,
         longitud: usuarioJSON.direccion.longitud,
@@ -61,6 +63,7 @@ export class Usuario {
       password: this.password,
       direccion: {
         direccion: this.direccion,
+        calle: this.calle,
         altura: this.altura,
         latitud: this.latitud,
         longitud: this.longitud
