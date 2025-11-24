@@ -1,9 +1,9 @@
 import { LuX } from "react-icons/lu"
 import { useNavigate } from "react-router-dom"
-import type { Pedido } from "@/pages/detalle-pedido/Pedido"
 import { ConfirmDrawer } from "../confirm-modal/ConfirmModal"
 import { useConfirmModal } from "@/customHooks/useConfirmModal"
 import { Button, Card, Image, Grid, GridItem, VStack } from "@chakra-ui/react"
+import type { Pedido } from "@/domain/Pedido"
 
 interface PedidoCardProps {
   order: Pedido
@@ -15,12 +15,20 @@ export const PedidoCard = ({ order, onCancel }: PedidoCardProps) => {
   const { isOpen, ask, cancel: closeDrawer } = useConfirmModal()
 
   const clickearCard = () => {
-    navigate(`/detalle-pedido/${order.id}`, { state: { pedido: order } })
+    navigate(`/detalle-pedido/${order.id}`)
   }
 
   const cancelarPedido = (e: React.MouseEvent) => {
     e.stopPropagation()
-    ask(() => onCancel(order.id))
+    ask(() => onCancel(order.id!))
+  }
+
+  const formatFecha = (fecha: Date | null) => {
+    if (!fecha) return ''
+    return new Intl.DateTimeFormat('es-AR', {
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(fecha)
   }
 
   return (
@@ -36,8 +44,8 @@ export const PedidoCard = ({ order, onCancel }: PedidoCardProps) => {
           >
             <GridItem gridRow="1 / 4" gridColumn="1 / 2">
               <Image
-                src={order.local.urlImagenLocal}
-                alt={order.local.nombre}
+                src={order.local!.urlImagenLocal}
+                alt={order.local!.nombre}
                 width="100px"
                 height="100%"
                 objectFit="fill"
@@ -47,13 +55,13 @@ export const PedidoCard = ({ order, onCancel }: PedidoCardProps) => {
             <GridItem gridRow="1 / 4" gridColumn="2 / 3" p={2} display="flex" alignItems="center">
               <VStack align="start" gap={0}>
                 <Card.Title fontSize="sm" mb={0}>
-                  {order.local.nombre}
+                  {order.local!.nombre}
                 </Card.Title>
                 <Card.Description fontSize="s" color="gray.600">
-                  Total: ${order.precioTotal.toFixed(2)}
+                  Total: ${order.costoTotalPedido.toFixed(2)}
                 </Card.Description>
                 <Card.Description fontSize="s" color="gray.600">
-                  {order.hora} - {order.items} artículos
+                  {formatFecha(order.fechaPedido)} - {order.platosDelPedido?.length} artículos
                 </Card.Description>
               </VStack>
             </GridItem>
@@ -79,7 +87,7 @@ export const PedidoCard = ({ order, onCancel }: PedidoCardProps) => {
       <ConfirmDrawer
         open={isOpen}
         onConfirm={() => {
-          onCancel(order.id)
+          onCancel(order.id!)
           closeDrawer()
         }}
         onCancel={closeDrawer}
