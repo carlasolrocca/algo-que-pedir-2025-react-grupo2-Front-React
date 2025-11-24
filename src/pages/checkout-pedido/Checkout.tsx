@@ -1,7 +1,5 @@
 import { Button } from '@/components/boton/boton'
-import { Articulo } from '@/components/articulo-checkout/Articulo'
-import { Heading, Stack, IconButton, Select, createListCollection, Portal, Flex, Text } from '@chakra-ui/react'
-import { IoMdArrowBack } from 'react-icons/io'
+import { Flex, Heading, Text } from '@chakra-ui/react'
 import { useEffect, useState } from 'react'
 import { Pedido } from '@/domain/Pedido'
 import { pedidoService } from '@/services/pedidoService'
@@ -9,30 +7,31 @@ import { useNavigate, useOutletContext, type ErrorResponse } from 'react-router-
 import { getMensajeError } from '@/utils/errorHandling'
 import { toaster } from '@/components/chakra-toaster/toaster'
 import { useOnInit } from '@/customHooks/useOnInit'
-import { localService, medioDePagoLabels, type LocalJSON, type MedioDePago } from '@/services/localServiceTest'
+import { localService, type LocalJSON, type MedioDePago } from '@/services/localServiceTest'
 import type { CarritoContext } from '../layout-carrito/CarritoLayout'
 import { LoadingSpinner } from '@/components/spinnerCargando/spinner'
 import type { Usuario } from '@/domain/Usuario'
 import { usuarioService } from '@/services/usuarioService'
 import { distanciaService } from '@/services/distanciaService'
+import { PedidoCheckout } from '@/components/pedido/PedidoCheckout'
 
 
 export const CheckoutPedido = () => {
     const navigate = useNavigate()
     const { carrito, decrementarPlato, limpiarCarrito } = useOutletContext<CarritoContext>()
-    
+
     const [local, setLocal] = useState<LocalJSON | null>(null)
     const [usuario, setUsuario] = useState<Usuario | null>(null)
     const [medioSeleccionado, setMedioSeleccionado] = useState<MedioDePago>('EFECTIVO')
-    
+
     const [tarifaEntregaMonto, setTarifaEntregaMonto] = useState(0)
     const [recargo, setRecargo] = useState(0)
     const [total, setTotal] = useState(0)
     const [distancia, setDistancia] = useState<string | null>(null)
 
     const [estaCargando, setEstaCargando] = useState(true)
-    
-    
+
+
     useOnInit(async () => {
         const idLocalStorage = localStorage.getItem('idUsuario')
         const userId = idLocalStorage !== null ? Number(idLocalStorage) : null
@@ -40,7 +39,7 @@ export const CheckoutPedido = () => {
             setEstaCargando(false)
             return
         }
-        
+
         if (!userId) {
             toaster.create({ title: 'Error', description: 'Usuario no autenticado.', type: 'error' })
             navigate('/loginUsuario')
@@ -67,7 +66,6 @@ export const CheckoutPedido = () => {
         } finally {
             setEstaCargando(false)
         }
-        setEstaCargando(false)
     })
 
     useEffect(() => { //Recalcula valores cuando cambia medio de pago
@@ -89,10 +87,10 @@ export const CheckoutPedido = () => {
     }, [carrito.subtotal, local, medioSeleccionado])
 
     const confirmarPedido = async () => {
-        if (!local) return
+        if (!local || !usuario) return
 
         const fechaPedido = new Date()
-        const pedido = Pedido.fromCarrito(carrito, local, medioSeleccionado, total, fechaPedido, usuario!)
+        const pedido = Pedido.fromCarrito(carrito, local, medioSeleccionado, total, fechaPedido, usuario, carrito.subtotal, recargo, tarifaEntregaMonto)
 
         try {
             await pedidoService.crearPedido(pedido)
@@ -114,7 +112,7 @@ export const CheckoutPedido = () => {
     }
 
     if (estaCargando) {
-        return <LoadingSpinner mensaje = "Cargando checkout..." />
+        return <LoadingSpinner mensaje="Cargando checkout..." />
     }
 
     if (!local || carrito.items.length === 0) {
@@ -129,93 +127,22 @@ export const CheckoutPedido = () => {
         )
     }
 
-    const itemsSelect = local.mediosDePago.map((medio) => ({
-        label: medioDePagoLabels[medio],
-        value: medio,
-    })
-    )
-
-    const collection = createListCollection({ items: itemsSelect })
-
-    return(
-        <main className="main-checkout">
-            <Heading as="header" className="checkout-header">
-                <IconButton variant="ghost" onClick={() => navigate(-1)}><IoMdArrowBack/></IconButton>
-                <h1 className="checkout-titulo">Tu pedido</h1>
-            </Heading>
-            <Stack as="section" className="container-checkout">
-                <Heading as="h2">Restaurante</Heading>
-                <figure className="restaurante-figure">
-                    <img className="imagen-restaurante" src={local.urlImagenLocal} alt='Imágen del restaurante'/>
-                    <Stack as='figcaption' gap={0}>
-                        <h3>{local.nombre}</h3>
-                        <span className='texto-secundario-checkout'>{local.rating.toFixed(1)} ★ · {distancia} · {tarifaEntregaMonto.toFixed(2)}</span>
-                    </Stack>
-                </figure>
-            </Stack>
-            <Stack as="section" className="container-checkout">
-                <Heading as="h2">Artículos</Heading>
-                {carrito.items.map((item) => (
-                    <Articulo 
-                    key={item.plato.id} 
-                    nombre={item.plato.nombre} 
-                    cantidad={item.cantidad} 
-                    precioUnitario={item.plato.precioUnitario}
-                    onDecrement={() => decrementarPlato(item.plato.id)} />
-                ))}
-            </Stack>
-            <Stack as="section" className="container-checkout">
-                <Heading as="h2">Resumen</Heading>
-                <article className="container-resumen">
-                    <Stack>
-                        <span className="texto-secundario-checkout">Subtotal</span>
-                        <span className="texto-secundario-checkout">Recargo por tipo de pago</span>
-                        <span className="texto-secundario-checkout">Tarifa de entrega</span>
-                        <span className="texto-secundario-checkout">Total</span>
-                    </Stack>
-                    <Stack>
-                        <span className="precio-resumen">${carrito.subtotal.toFixed(2)}</span>
-                        <span className="precio-resumen">${recargo.toFixed(2)}</span>
-                        <span className="precio-resumen">${tarifaEntregaMonto.toFixed(2)}</span>
-                        <span className="precio-resumen">${total.toFixed(2)}</span>
-                    </Stack>
-                </article>
-            </Stack>
-            <Stack as="section" className="container-checkout">
-                <Select.Root collection={collection} size="lg" value={[medioSeleccionado]}
-                    onValueChange={(details) => {
-                        const seleccionado = details.value[0] as MedioDePago
-                        if (seleccionado) {
-                            setMedioSeleccionado(seleccionado)
-                        }
-                    }}
-                >
-                    <Select.HiddenSelect />
-                    <Select.Label>Forma de pago</Select.Label>
-                    <Select.Control>
-                        <Select.Trigger>
-                            <Select.ValueText />
-                        </Select.Trigger>
-                        <Select.IndicatorGroup>
-                            <Select.Indicator />
-                        </Select.IndicatorGroup>
-                    </Select.Control>
-                    <Portal>
-                        <Select.Positioner>
-                            <Select.Content>
-                                {collection.items.map((item) => (
-                                    <Select.Item item={item} key={item.value}>
-                                        {item.label}
-                                        <Select.ItemIndicator />
-                                    </Select.Item>
-                                ))}
-                            </Select.Content>
-                        </Select.Positioner>
-                    </Portal>
-                </Select.Root>
-                <Button className='boton-checkout' onClick={confirmarPedido}>Confirmar pedido</Button>
-                <Button variant="secundario" className='boton-checkout' onClick={limpiarCarrito}>Limpiar carrito de compras</Button>
-            </Stack>
-        </main>
+    return (
+        <PedidoCheckout
+            local={local}
+            items={carrito.items}
+            subtotal={carrito.subtotal}
+            recargo={recargo}
+            tarifaEntrega={tarifaEntregaMonto}
+            total={total}
+            distancia={distancia}
+            readOnly={false}
+            medioDePago={medioSeleccionado}
+            onDecrement={(platoId) => decrementarPlato(platoId)}
+            onMedioDePagoChange={setMedioSeleccionado}
+            onConfirm={confirmarPedido}
+            onClearCart={limpiarCarrito}
+            onBack={() => navigate(-1)}
+        />
     )
 }
