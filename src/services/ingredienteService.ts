@@ -6,7 +6,7 @@ import { getAxiosData } from './common'
 
 class IngredienteService {
     async getAll(): Promise<Ingrediente[]> {
-        const query = () => axios.get<IngredienteJSON[]>(`${REST_SERVER_URL}/ingrediente`)
+        const query = () => axios.get<IngredienteJSON[]>(`${REST_SERVER_URL}/ingrediente/criterio`)
         const data = await getAxiosData(query)
         return data.map(ing => Ingrediente.fromJSON(ing))
     }
