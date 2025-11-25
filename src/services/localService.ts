@@ -11,7 +11,7 @@ class LocalService {
     }
 
     async obtenerTodos() {
-        const queryLocal = () => axios.get<LocalJSON[]>(`${REST_SERVER_URL}/locales`)
+        const queryLocal = () => axios.get<LocalJSON[]>(`${REST_SERVER_URL}/locales/criterio`)
         return (await getAxiosData(queryLocal)).map(local => Local.fromJSON(local))
     }
 }
