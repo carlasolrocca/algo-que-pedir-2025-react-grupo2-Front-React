@@ -28,3 +28,6 @@ dist-ssr
 
 # Coverage report
 coverage
+
+# Gemini
+GEMINI.md

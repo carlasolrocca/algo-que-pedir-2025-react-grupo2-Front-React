@@ -28,6 +28,7 @@ export default [
         HTMLElement: 'readonly',
         HTMLDivElement: 'readonly',
         HTMLSelectElement: 'readonly',
+        localStorage: 'readonly'
       },
     },
     plugins: {
